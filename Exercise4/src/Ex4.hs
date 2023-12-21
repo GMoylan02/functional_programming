@@ -1,5 +1,7 @@
 module Ex4 where
 
+import System.IO
+
 --required for Q1
 data CExpr -- the expression datatype
   = Value Float -- floating-point value
@@ -40,10 +42,31 @@ mdeval _ (Value x) = return x
 mdeval d (Variable x) = (find x d)
 mdeval d (DvdBy x y)
   = do b <- mdeval d y
-      if b == 0.0
+       if b == 0.0
         then fail "Divide by zero"
         else do a <- mdeval d x
                 return (a/b)
+mdeval d (Subtract x y) = mdevalOP d (-) x y
+mdeval d (Magnitude x) 
+  = do b <- (mdeval d x)
+       return (abs b)
+mdeval d (Not x)
+  = do b <- (mdeval d x)
+       if b == 0.0
+        then return 1
+        else return 0
+mdeval d (Dfrnt x y)
+  = do a <- (mdeval d x)
+       b <- (mdeval d y)
+       if a == b
+        then return 0
+        else return 1
+mdeval d (NotNull x)
+  = do b <- (mdeval d x)
+       if b == 0.0
+        then return 0
+        else return 1
+
 
 
 -- Q2 (8 marks)
@@ -75,23 +98,35 @@ dofold (z,op) = foldR z op
 
 -- dofold lenTuple = len
 lenTuple :: (Int,Int -> Int -> Int)
-lenTuple = (undefined,undefined)
+lenTuple = (0,(incsnd))
 
 -- dofold sumupTuple = sumup
 sumupTuple :: (Int,Int -> Int -> Int)
-sumupTuple = (undefined,undefined)
+sumupTuple = (0,(+))
 
 -- dofold prodTuple = prod
 prodTuple :: (Int,Int -> Int -> Int)
-prodTuple = (undefined,undefined)
+prodTuple = (1,(*))
 
 -- dofold catTuple = cat
 catTuple :: ([Thing],[Thing] -> [Thing] -> [Thing])
-catTuple = (undefined,undefined)
+catTuple = ([],(++))
 
 -- Q3 (11 marks)
 sub = subtract -- shorter!
 ops = [(+26),(sub 20),(+21),(*28),(sub 29),(*21),(sub 27),(sub 26),(25-),(+29),(*19),(*22)]
+
+apply_ops :: Handle -> Handle -> [Integer -> Integer] -> IO ()
+apply_ops input_handle output_handle (x:xs) = do
+  eof <- hIsEOF input_handle
+  if eof 
+    then return ()
+    else do
+      s <- hGetLine input_handle
+      let line = read s :: Integer
+      hPutStrLn output_handle (show (x line))
+      apply_ops input_handle output_handle (xs++[x])
+apply_ops _ _ [] = return ()
 
 -- (!) This question requires modifying Main.hs
 -- See, and/or compile and run Main.hs for further details
@@ -99,3 +134,7 @@ ops = [(+26),(sub 20),(+21),(*28),(sub 29),(*21),(sub 27),(sub 26),(25-),(+29),(
 -- add extra material below here
 -- e.g.,  helper functions, test values, etc. ...
 
+mdevalOP d op x y
+  = do a <- mdeval d x
+       b <- mdeval d y
+       return (a `op` b)
