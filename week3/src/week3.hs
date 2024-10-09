@@ -34,7 +34,7 @@ Starting with: return a >>= f
 
 PROVE: m >>= return == m
 
-Starting with: m >>= return
+Using LHS: m >>= return
     Case where m is Nil:
         Nil >>= return
         = Nil                                   (From definition of bind on a Nil, this is exactly m)
@@ -74,7 +74,7 @@ Starting with (m >>= f) >>= g
 data Pair a b = P a b
     deriving (Show, Eq)
 
-instance Functor Pair where
+instance Functor (Pair a) where
     fmap f (P a b) = P a (f b)
 
 
